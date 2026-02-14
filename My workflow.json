@@ -1,0 +1,365 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 2,
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -432,
+        0
+      ],
+      "id": "a54605ae-53aa-466e-85e6-ef7c8358038e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1gKhFSu2xgtnWaoIMy-NKL_ykaqh-hcLDgxUSQl7_se4",
+          "mode": "list",
+          "cachedResultName": "Linkedin post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gKhFSu2xgtnWaoIMy-NKL_ykaqh-hcLDgxUSQl7_se4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Linkedin content tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gKhFSu2xgtnWaoIMy-NKL_ykaqh-hcLDgxUSQl7_se4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "To Do"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "99e0c5da-9e49-4c63-8c3c-6976847d105e",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OZMF6NcGyX1MsIBy",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"What are the latest updates on {{ $json['Rough topic name'] }} \",\n  \"search_depth\": \"basic\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 3,\n  \"topic\": \"general\",\n  \"time_range\": null,\n  \"start_date\": \"2026-02-11\",\n  \"end_date\": \"{{$now.format('yyyy-MM-dd')}}\",\n  \"include_answer\": false,\n  \"include_raw_content\": false,\n  \"include_images\": false,\n  \"include_image_descriptions\": false,\n  \"include_favicon\": false,\n  \"include_domains\": [],\n  \"exclude_domains\": [],\n  \"country\": null,\n  \"auto_parameters\": false,\n  \"include_usage\": false\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "c544ef82-da40-42de-b2a3-a45adcde5ce8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Topic for Linkedin post : {{ $('Get row(s) in sheet').item.json['Rough topic name'] }}\n\nReference titles and articles \n\nTitle 1 : {{ $json.results[0].title }}\nArticle 1 : {{ $json.results[0].content }}\nurl : {{ $json.results[0].url }}\n\nTitle 2 : {{ $json.results[1].title }}\nArticle 2 : {{ $json.results[1].content }}\nurl 2 : {{ $json.results[1].url }}\n\n\nTitle 3 : {{ $json.results[2].title }}\nArticle 3 : {{ $json.results[2].content }}\nurl 3 : {{ $json.results[1].url }}\n ",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# ROLE\nYou are a LinkedIn content strategist who specializes in writing high-engagement, platform-optimized LinkedIn posts.\n\n# INPUT\nYou will receive 3 references:\n1. Article title\n2. Parsed article content relevant to the topic\n3. Source URL\n\nUse all three references to generate an original LinkedIn post.\nDo NOT copy sentences directly.\nDo NOT mention the URL unless necessary for credibility.\n\n# OBJECTIVE\nCreate a LinkedIn-friendly post that:\n\n- Starts with a strong 1–2 line hook\n- Uses short paragraphs (1–3 lines max)\n- Uses spacing for readability\n- Includes bullet points where helpful\n- Sounds professional, practical, and human\n- Ends with a question that encourages engagement\n- Keeps length between 150–300 words\n- Avoids excessive emojis (maximum 1 if used)\n\n# STYLE\n- Clear and concise\n- Insightful, not academic\n- Action-oriented\n- No jargon-heavy writing\n- No repetition\n\n# OUTPUT FORMAT (STRICT)\n- Return ONLY the LinkedIn post text.\n- Do NOT include \"Titel:\" or \"Content:\" or any other headings.\n- Do NOT add explanations or commentary.\n- Include the hashtags at the very end of the post.\n- The output should be ready to post directly on LinkedIn.\n\nContent:\n<Generated LinkedIn post content>\n\nRules:\n- Do NOT add explanations.\n- Do NOT add extra headings.\n- Do NOT add anything before or after this format.\n- Do NOT include hashtags separately; include them at the end of the content.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        96,
+        0
+      ],
+      "id": "54f72f01-1a95-4452-bb42-d3467cad6919",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        208
+      ],
+      "id": "b43d2040-a9a1-41be-871a-9a2362822566",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SCuE2PEHpta5zUHg",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1gKhFSu2xgtnWaoIMy-NKL_ykaqh-hcLDgxUSQl7_se4",
+          "mode": "list",
+          "cachedResultName": "Linkedin post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gKhFSu2xgtnWaoIMy-NKL_ykaqh-hcLDgxUSQl7_se4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Linkedin content tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gKhFSu2xgtnWaoIMy-NKL_ykaqh-hcLDgxUSQl7_se4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Rough topic name": "={{ $('Get row(s) in sheet').item.json['Rough topic name'] }}",
+            "Status": "Done",
+            "Topic name (For Linkedin)": "={{ $json.output.title }}",
+            "Article content": "={{ $json.output.content }}"
+          },
+          "matchingColumns": [
+            "Rough topic name"
+          ],
+          "schema": [
+            {
+              "id": "Rough topic name",
+              "displayName": "Rough topic name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Topic name (For Linkedin)",
+              "displayName": "Topic name (For Linkedin)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Article content",
+              "displayName": "Article content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e286a322-d30b-4e5b-be3b-c541aa018e7d",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OZMF6NcGyX1MsIBy",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"description\": \"Headline of the LinkedIn post\"\n    },\n    \"content\": {\n      \"type\": \"string\",\n      \"description\": \"Full formatted LinkedIn post content including paragraphs and bullet points\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"description\": \"List of hashtags without the # symbol\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"minItems\": 3,\n      \"maxItems\": 15\n    }\n  },\n  \"required\": [\"title\", \"content\", \"hashtags\"],\n  \"additionalProperties\": false\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        224
+      ],
+      "id": "d7542288-9f77-481a-9d54-5ba9f490bdaa",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json['Article content'] }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "70cdf9d2-cb1c-458c-a926-06bca3b4e8f6",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "nPkSVETjm0SnzrjG",
+          "name": "LinkedIn account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "578d8f42-82b2-4821-af93-4395a5c64f3c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6ae99db75c8a33b8f364c9fb7f3d4d7329b012696cca52599939a35442a95a66"
+  },
+  "id": "BSWZo08lsRbh8zuc",
+  "tags": []
+}
