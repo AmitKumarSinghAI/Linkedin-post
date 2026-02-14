@@ -73,7 +73,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ...." # put your bearer token
             }
           ]
         },
