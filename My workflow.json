@@ -59,7 +59,7 @@
       "name": "Get row(s) in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "OZMF6NcGyX1MsIBy",
+          "id": "put your google sheet id for the auth",
           "name": "Google Sheets account 2"
         }
       }
